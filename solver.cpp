@@ -54,7 +54,48 @@ bool isInString(vector <string> list, string letter){
     return inIt;
 }
 
+//getting green letters
+void greenLetters(vector <char> &greens, vector <int> &greenPlacement, string alphabet){
+    string word;
+    bool redo=false;
+    cout<<"Please enter your \033[0;32mgreen\033[0;1m letter (ex. --A-E ): ";
+    cin>>word;
 
+    //checking for problems
+    while (word.length()!=5){
+        cout<<"Please try again. You should enter dashes for the non green letter and the letter in the positions they should be: ";
+        cin>>word;
+        
+    }
+    do{
+        redo=false;
+        for (int i=0; i<5; i++){
+            if (word[i]!='-'){
+                if (alphabet.find(toupper(word[i]))>26){
+                    redo=true;
+                }
+            }
+        }
+        if (redo){
+            cout<<"You need to enter a letter, no other symbols, and it needs to be 5 characters long please: ";
+            cin>>word;
+        }
+    } while (redo);
+    //putting the letters into the vectors
+    for (int i=0; i<5; i++){
+        if (word[i]!='-'){
+            word[i]=toupper(word[i]);
+            greens.push_back(word[i]);
+            greenPlacement.push_back(i+1);
+        }
+    }
+    /*cout<<"The green letters are: \n";
+    for (int i=0; i<greens.size(); i++){
+        cout<<greens[i]<<": "<<greenPlacement[i]<<endl;
+    }*/
+}
+
+//getting the gray and yellow letters
 void gettingLetters(vector <char> &colourLetters, string colour, string alphabet){
     char letter;
     //getting the letters
@@ -73,38 +114,32 @@ void gettingLetters(vector <char> &colourLetters, string colour, string alphabet
     }
 }
 
-//getting placements
-void placements(vector <char> greens, vector <char> yellows, vector <int> &greenPlacements, vector <string> &yellowPlacements){
+//getting yellow placements
+void placements(vector <char> yellows, vector <string> &yellowPlacements){
     //greens
-    int placement;
-    for (int i=0; i<greens.size(); i++){
-        cout<<"Where is your "<<greens[i]<<"? ";
-        cin>>placement;
-        while (placement>5||placement<1||isInInt(greenPlacements, placement)){
-            cout<<"That isn't a possible placement. Please try again.";
-            cin>>placement;
-        }
-        greenPlacements.push_back(placement);
-    }
+    string placement;
 
     //yellows
     for (int i=0; i<yellows.size(); i++){
         yellowPlacements.push_back("");
-        //cout<<"Size: "<<yellowPlacements.size()<<"   Total size: "<<yellows.size();
         placement=6;
-        cout<<"Where can your "<<yellows[i]<<" not be? (enter -1 to stop.) \n";
-        while (placement!=-1){
+        cout<<"Where can your "<<yellows[i]<<" not be? (ex. A-A--): ";
             cin>>placement;
-            while ((placement>5||placement<1||isInString(yellowPlacements, to_string(placement)))&&placement!=-1){
-                cout<<"That isn't a possible placement. Please try again.";
+            while (placement.length()!=5){
+                cout<<"That isn't correct, sorry. \nFor example if you know your a can't be 1st or 3rd, enter A-A--): ";
                 cin>>placement;
             }
-            if (placement!=-1){
-                yellowPlacements[i].append(to_string(placement));
+            for (int j=0; j<5; j++){
+                if (placement[j]!='-'){
+                    yellowPlacements[i].append(to_string(j+1));
+                }
             }
+            
         }
-        //cout<<"Yellow Placements:"<<yellowPlacements[i]<<" \tYellows: "<<yellows[i];
-    }
+    /*cout<<"The yellow letters are: \n";
+    for (int i=0; i<yellows.size(); i++){
+        cout<<yellows[i]<<": "<<yellowPlacements[i]<<endl;
+    }*/
 }
 
 //getting the possible words
@@ -126,32 +161,10 @@ void eliminating (vector <string> &possibles, vector <char> grays, vector <char>
     //doesn't have the worng letters
     if (!bad){
         //making sure it has the green letters it needs to
-        for (int i=0; i<greens.size(); i++){
-            included=false;
-            letter=greens[i];
-            //in word
-            for (int j=0; j<5; j++){
-                if (letter==word[j]){
-                    included=true;
-                    j=6;
-                }
-            }
-            if (!included){
-                allIncluded=false;
-                i=greens.size()+1;
-            }
-            rightSpot=false;
-            //placements
-            if (greens[i]==word[greenPlacements[i]-1]){
-                rightSpot=true;
-            }
-            if (!rightSpot){
-                i=greens.size()+1;
-            }
-        }
-        
+        greensRight(greens, included, letter, word, allIncluded, rightSpot, greenPlacements);
+
         //making sure it has the yellow letters it needs to
-        if (allIncluded){
+        if (allIncluded&&rightSpot){
             for (int i=0; i<yellows.size(); i++){
                 included=false;
                 letter=yellows[i];
@@ -185,6 +198,33 @@ void eliminating (vector <string> &possibles, vector <char> grays, vector <char>
     }
 }
 
+void greensRight(std::vector<char> &greens, bool &included, char &letter, std::string &word, bool &allIncluded, bool &rightSpot, std::vector<int> &greenPlacements){
+    for (int i = 0; i < greens.size(); i++){
+        included = false;
+        letter = greens[i];
+        // in word
+        for (int j = 0; j < 5; j++){
+            if (letter == word[j]){
+                included = true;
+                j = 6;
+            }
+        }
+        if (!included){
+            allIncluded = false;
+            i = greens.size() + 1;
+        }
+        rightSpot = false;
+
+        // placements
+        if (greens[i] == word[greenPlacements[i] - 1]){
+            rightSpot = true;
+        }
+        if (!rightSpot){
+            i = greens.size() + 1;
+        }
+    }
+}
+
 void hasLetter(char letter, std::string &word, bool &included){
     for (int j = 0; j < 5; j++){
         if (letter == word[j]){
@@ -199,16 +239,16 @@ void instructions(){
 }
 
 void runTest(){
-    vector <char> greens;
+    vector <char> greens={'A'};
     vector <char> grays;
-    vector <char> yellows={'A','B'};
+    vector <char> yellows={'B'};
     vector <char> possibleLetters;
     set <string> totalOptions=getWordleWords();
    // set <string> totalOptions={"BREAK"};
 
-    vector <int> greenPlacements;
+    vector <int> greenPlacements={3};
 
-    vector <string> yellowPlacements ={"12","12"};
+    vector <string> yellowPlacements ={"12"};
     vector <string> possibleWords;
     //going through all words
     for (int i=0; i<totalOptions.size(); i++){
@@ -248,12 +288,12 @@ int main(){
     }
 
     //getting the letters
-    gettingLetters(greens, "\033[0;32mgreen\033[0;1m", alphabet);
+    greenLetters(greens, greenPlacements, alphabet);
     gettingLetters(yellows, "\033[0;93myellow\033[0;1m", alphabet);
     gettingLetters(grays, "\033[0;98mgray\033[0;1m", alphabet);
         
     //getting placements
-    placements(greens, yellows, greenPlacements, yellowPlacements);
+    placements(yellows, yellowPlacements);
     
     //going through all words
     for (auto it:totalOptions){
