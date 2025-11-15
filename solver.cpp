@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <set>
 #include <fstream>
+#include "solver.h"
 using namespace std;
 
 //functions
@@ -57,7 +58,7 @@ bool isInString(vector <string> list, string letter){
 void gettingLetters(vector <char> &colourLetters, string colour, string alphabet){
     char letter;
     //getting the letters
-    cout<<"\033[0;1mPlease enter a "<<colour<<" letter that you have (when done enter 1): ";
+    cout<<"\033[0;1mPlease enter all the "<<colour<<" letter that you have (when done enter 1): ";
     cin>>letter;
     letter=toupper(letter);
 
@@ -67,7 +68,6 @@ void gettingLetters(vector <char> &colourLetters, string colour, string alphabet
         } else {
             cout<<"That isn't a letter. \n";
         }
-        cout<<"Please enter another "<<colour<<" letter: ";
         cin>>letter;
         letter=toupper(letter);
     }
@@ -155,12 +155,7 @@ void eliminating (vector <string> &possibles, vector <char> grays, vector <char>
             for (int i=0; i<yellows.size(); i++){
                 included=false;
                 letter=yellows[i];
-                for (int j=0; j<5; j++){
-                    if (letter==word[j]){
-                        included=true;
-                        j=6;
-                    }
-                }
+                hasLetter(letter, word, included);
                 if (!included){
                     allIncluded=false;
                     i=yellows.size()+1;
@@ -169,6 +164,7 @@ void eliminating (vector <string> &possibles, vector <char> grays, vector <char>
             if (allIncluded){
                 //are they in the right spot
                 for (int i=0; i<yellowPlacements.size(); i++){
+                    rightSpot=true;
                     //placements
                     for (int j=0; j<yellowPlacements[i].length(); j++){
                         number=yellowPlacements[i];
@@ -189,16 +185,67 @@ void eliminating (vector <string> &possibles, vector <char> grays, vector <char>
     }
 }
 
+void hasLetter(char letter, std::string &word, bool &included){
+    for (int j = 0; j < 5; j++){
+        if (letter == word[j]){
+            included = true;
+            j = 6;
+        }
+    }
+} 
+// instruction
+void instructions(){
+    cout<<"Instructions.";
+}
+
+void runTest(){
+    vector <char> greens;
+    vector <char> grays;
+    vector <char> yellows={'A','B'};
+    vector <char> possibleLetters;
+    set <string> totalOptions=getWordleWords();
+   // set <string> totalOptions={"BREAK"};
+
+    vector <int> greenPlacements;
+
+    vector <string> yellowPlacements ={"12","12"};
+    vector <string> possibleWords;
+    //going through all words
+    for (int i=0; i<totalOptions.size(); i++){
+        auto it = totalOptions.begin();
+        // Advance the iterator to the random spot
+        advance(it, i); 
+        //going to elimintation 
+        eliminating(possibleWords, grays, greens, yellows, *it, greenPlacements, yellowPlacements);
+    }
+    if (possibleWords.size()>0){
+        cout<<"broken, this should not be reached";
+
+    }
+    for (int i=0; i<possibleWords.size(); i++){
+        cout<<possibleWords[i]<<endl;
+    }
+    
+}
 
 //main
 int main(){
+    //runTest();
     //variables
-    string letter, alphabet="QWERTYUIOPASDFGHJKLZXCVBNM";
-    int placement;
+    string letter, wantInstructions, alphabet="QWERTYUIOPASDFGHJKLZXCVBNM";
+    int placement, counter;
     vector <char> greens, grays, yellows, possibleLetters;
     vector <string> possibleWords, yellowPlacements;
     vector <int> greenPlacements;
     set <string> totalOptions=getWordleWords();
+
+    //instructions
+    cout<<"If you need instructions click y, otherwise click n";
+    cin>>wantInstructions;
+
+    if (wantInstructions=="y"){
+        instructions();
+    }
 
     //getting the letters
     gettingLetters(greens, "\033[0;32mgreen\033[0;1m", alphabet);
@@ -209,17 +256,24 @@ int main(){
     placements(greens, yellows, greenPlacements, yellowPlacements);
     
     //going through all words
-    for (int i=0; i<totalOptions.size(); i++){
-        auto it = totalOptions.begin();
-        // Advance the iterator to the random spot
-        advance(it, i); 
-        //going to elimintation 
-        eliminating(possibleWords, grays, greens, yellows, *it, greenPlacements, yellowPlacements);
+    for (auto it:totalOptions){
+
+    // for (int i=0; i<totalOptions.size(); i++){
+    //     auto it = totalOptions.begin();
+    //     // Advance the iterator to the random spot
+    //     advance(it, i); 
+        //going to elimintation i
+        eliminating(possibleWords, grays, greens, yellows, it, greenPlacements, yellowPlacements);
     }
-    cout<<"\nSucess! The size of the list is "<<possibleWords.size()<<"\n\n";
-    cout<<"\nSome options for the words are :"<<possibleWords[rand()%possibleWords.size()]<<"\n"<<possibleWords[rand()%possibleWords.size()]<<"\n"<<possibleWords[rand()%possibleWords.size()]<<"\n"<<possibleWords[rand()%possibleWords.size()]<<"\n"<<possibleWords[rand()%possibleWords.size()]<<"\n"<<possibleWords[rand()%possibleWords.size()];
+    cout<<"\n\nSucess! The size of the list is "<<possibleWords.size()<<endl;
+    cout<<"\nThe words are :";
     for (int i=0; i<possibleWords.size(); i++){
-        cout<<possibleWords[i]<<endl;
+        cout<<possibleWords[i]<<"\t";
+        counter+=1;
+        if (counter==10){
+            counter=0; 
+            cout<<"\n";
+        }
     }
     return 0;
 }
