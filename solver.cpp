@@ -90,8 +90,9 @@ void placements(vector <char> greens, vector <char> yellows, vector <int> &green
     //yellows
     for (int i=0; i<yellows.size(); i++){
         yellowPlacements.push_back("");
+        //cout<<"Size: "<<yellowPlacements.size()<<"   Total size: "<<yellows.size();
         placement=6;
-        cout<<"Where can your "<<yellows[i]<<" not be? (enter your number, click enter, then enter the next. enter -1 to stop.) \n";
+        cout<<"Where can your "<<yellows[i]<<" not be? (enter -1 to stop.) \n";
         while (placement!=-1){
             cin>>placement;
             while ((placement>5||placement<1||isInString(yellowPlacements, to_string(placement)))&&placement!=-1){
@@ -102,6 +103,7 @@ void placements(vector <char> greens, vector <char> yellows, vector <int> &green
                 yellowPlacements[i].append(to_string(placement));
             }
         }
+        //cout<<"Yellow Placements:"<<yellowPlacements[i]<<" \tYellows: "<<yellows[i];
     }
 }
 
@@ -149,7 +151,7 @@ void eliminating (vector <string> &possibles, vector <char> grays, vector <char>
         }
         
         //making sure it has the yellow letters it needs to
-        if (allIncluded&&rightSpot){
+        if (allIncluded){
             for (int i=0; i<yellows.size(); i++){
                 included=false;
                 letter=yellows[i];
@@ -163,17 +165,21 @@ void eliminating (vector <string> &possibles, vector <char> grays, vector <char>
                     allIncluded=false;
                     i=yellows.size()+1;
                 }
-                //placements
-                for (int j=0; j<yellowPlacements[i].length(); j++){
-                    fprintf(stderr, "In yellow for loop");
-                    cout<<"    Place: "<<yellowPlacements[i];
-                    number=yellowPlacements[i];
-                    if (yellows[i]==word[number[j]-49]){
-                        rightSpot=false;
+            }
+            if (allIncluded){
+                //are they in the right spot
+                for (int i=0; i<yellowPlacements.size(); i++){
+                    //placements
+                    for (int j=0; j<yellowPlacements[i].length(); j++){
+                        number=yellowPlacements[i];
+                        if (yellows[i]==word[number[j]-49]){
+                            rightSpot=false;
+                            j=10;
+                        }
                     }
-                }
-                if (!rightSpot){
-                    i=greens.size()+1;
+                    if (!rightSpot){
+                        i=greens.size()+1;
+                    }
                 }
             }
         }
@@ -211,7 +217,9 @@ int main(){
         eliminating(possibleWords, grays, greens, yellows, *it, greenPlacements, yellowPlacements);
     }
     cout<<"\nSucess! The size of the list is "<<possibleWords.size()<<"\n\n";
-    cout<<"\nSome options for the words are :"<<possibleWords[rand()%possibleWords.size()]<<"\n"<<possibleWords[rand()%possibleWords.size()]<<"\n"<<possibleWords[rand()%possibleWords.size()]<<"\n"<<possibleWords[rand()%possibleWords.size()];
-
+    cout<<"\nSome options for the words are :"<<possibleWords[rand()%possibleWords.size()]<<"\n"<<possibleWords[rand()%possibleWords.size()]<<"\n"<<possibleWords[rand()%possibleWords.size()]<<"\n"<<possibleWords[rand()%possibleWords.size()]<<"\n"<<possibleWords[rand()%possibleWords.size()]<<"\n"<<possibleWords[rand()%possibleWords.size()];
+    for (int i=0; i<possibleWords.size(); i++){
+        cout<<possibleWords[i]<<endl;
+    }
     return 0;
 }
