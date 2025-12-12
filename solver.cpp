@@ -6,15 +6,17 @@
 #include <cstdlib>
 #include <set>
 #include <fstream>
+#include <cmath>
+#include <algorithm>
 #include "solver.h"
 using namespace std;
 
 //functions
 //getting the word list
-set <string> getWordleWords() {
+set <string> getWordleWords(string fileName) {
     set <string> goodWords;       
     set <string> newWords;
-    ifstream file("options.txt");    
+    ifstream file(fileName);    
     string word;                   
     
     // Read each word from file and add to set
@@ -44,7 +46,7 @@ bool isInInt(vector <int> list, int letter){
 }
 
 //strings
-bool isInString(vector <string> list, string letter){
+bool isInChar(vector <char> list, char letter){
     bool inIt=false;
     for (int i=0; i<list.size(); i++){
         if (list[i]==letter){
@@ -58,12 +60,12 @@ bool isInString(vector <string> list, string letter){
 void greenLetters(vector <char> &greens, vector <int> &greenPlacement, string alphabet){
     string word;
     bool redo=false;
-    cout<<"Please enter your \033[0;32mgreen\033[0;1m letter (ex. --A-E ): ";
+    cout<<"\033[0;1mPlease enter your \033[0;32mgreen\033[0;1m letters (ex. --A-E ): ";
     cin>>word;
 
     //checking for problems
     while (word.length()!=5){
-        cout<<"Please try again. You should enter dashes for the non green letter and the letter in the positions they should be: ";
+        cout<<"Please try again. You should enter dashes for the non green letters and the letters in the positions they should be. \nIf you don't have any green letters enter 5 dashes: ";
         cin>>word;
         
     }
@@ -89,28 +91,23 @@ void greenLetters(vector <char> &greens, vector <int> &greenPlacement, string al
             greenPlacement.push_back(i+1);
         }
     }
-    /*cout<<"The green letters are: \n";
-    for (int i=0; i<greens.size(); i++){
-        cout<<greens[i]<<": "<<greenPlacement[i]<<endl;
-    }*/
 }
 
 //getting the gray and yellow letters
-void gettingLetters(vector <char> &colourLetters, string colour, string alphabet){
+void gettingLetters(vector <char> &colourLetters, string colour, string alphabet, vector <char> greens, vector <char> yellows){
+    string allLetters;
     char letter;
     //getting the letters
-    cout<<"\033[0;1mPlease enter all the "<<colour<<" letter that you have (when done enter 1): ";
-    cin>>letter;
-    letter=toupper(letter);
-
-    while (letter!='1'){
-        if (alphabet.find(letter)<26){
-            colourLetters.push_back(letter);
-        } else {
-            cout<<"That isn't a letter. \n";
+    cout<<"\033[0;1mPlease enter all the "<<colour<<" letter that you have (if none, enter 1): ";
+    cin>>allLetters;
+    if (allLetters!="1"){
+        for (int i=0; i<allLetters.length(); i++){
+            letter=toupper(allLetters[i]);
+            //making sure it is a letter
+            if (alphabet.find(letter)<26&&!isInChar(greens, letter)&&!isInChar(yellows, letter)){
+                colourLetters.push_back(letter);
+            }
         }
-        cin>>letter;
-        letter=toupper(letter);
     }
 }
 
@@ -118,28 +115,61 @@ void gettingLetters(vector <char> &colourLetters, string colour, string alphabet
 void placements(vector <char> yellows, vector <string> &yellowPlacements){
     //greens
     string placement;
+    bool redo;
 
     //yellows
     for (int i=0; i<yellows.size(); i++){
         yellowPlacements.push_back("");
         placement=6;
         cout<<"Where can your "<<yellows[i]<<" not be? (ex. A-A--): ";
+        cin>>placement;
+        while (placement.length()!=5){
+            cout<<"That isn't how you should enter it, sorry. \nFor example if you know your A can't be 1st or 3rd, enter A-A--): ";
             cin>>placement;
-            while (placement.length()!=5){
-                cout<<"That isn't correct, sorry. \nFor example if you know your a can't be 1st or 3rd, enter A-A--): ";
-                cin>>placement;
-            }
+        }
+
+        //checking for wrong enters.
+        do{
+            redo=false;
             for (int j=0; j<5; j++){
-                if (placement[j]!='-'){
-                    yellowPlacements[i].append(to_string(j+1));
+                if (placement[j]!='-'&&toupper(placement[j])!=yellows[i]){
+                        redo=true;
                 }
             }
+            if (redo){
+                cout<<"You need to enter only the letter "<<yellows[i]<<" or dashes and you need to enter all 5 characters please. \nFor example if you know your A can't be 1st or 3rd, enter A-A--):";
+                cin>>placement;
+            }
+        } while (redo);
+
+        //adding
+        for (int j=0; j<5; j++){
+            if (placement[j]!='-'){
+                yellowPlacements[i].append(to_string(j+1));
+            }
+        }
             
         }
     /*cout<<"The yellow letters are: \n";
     for (int i=0; i<yellows.size(); i++){
         cout<<yellows[i]<<": "<<yellowPlacements[i]<<endl;
     }*/
+}
+
+//seeing if they want all answers or just possible answers
+void wantsAllWords(set <string> &totalOptions){
+    string answer;
+    cout<<"\nDo you want all possible 5 letter words, or just the 5 letter words that could be the answer? (enter 'p' for possible words, enter 'a' for only answers): ";
+    cin>>answer;
+    while(answer!="p"&&answer!="a"&&answer!="P"&&answer!="A"){
+        cout<<answer<<" is not an acceptable response. Please try again: ";
+        cin>>answer;
+    }
+    if (answer=="a"||answer=="A"){
+        totalOptions=getWordleWords("answers.txt");
+    } else if (answer=="p"||answer=="P"){
+        totalOptions=getWordleWords("options.txt");
+    }
 }
 
 //getting the possible words
@@ -198,6 +228,7 @@ void eliminating (vector <string> &possibles, vector <char> grays, vector <char>
     }
 }
 
+//making sure the word has the green letters in the right places
 void greensRight(std::vector<char> &greens, bool &included, char &letter, std::string &word, bool &allIncluded, bool &rightSpot, std::vector<int> &greenPlacements){
     for (int i = 0; i < greens.size(); i++){
         included = false;
@@ -223,8 +254,13 @@ void greensRight(std::vector<char> &greens, bool &included, char &letter, std::s
             i = greens.size() + 1;
         }
     }
+    //having no greens still work
+    if (greens.size()==0){
+        rightSpot=true;
+    }
 }
 
+//checking if it has the letter
 void hasLetter(char letter, std::string &word, bool &included){
     for (int j = 0; j < 5; j++){
         if (letter == word[j]){
@@ -233,9 +269,46 @@ void hasLetter(char letter, std::string &word, bool &included){
         }
     }
 } 
-// instruction
+
+//getting letter percentages
+void letterPercents(vector <string> possibleWords, string alphabet, vector <float> &letterPercentages){
+    vector <int> letterCount;
+    float percent;
+    //getting the vector big enough
+    for (int i=0; i<26; i++){
+        letterCount.push_back(0);
+    }
+    for (int i=0; i<possibleWords.size(); i++){
+        for (int j=0; j<26; j++){
+            if (possibleWords[i].find(alphabet[j])<5){
+                letterCount[j]+=1;
+            }
+        }
+    }
+    for (int i=0; i<26; i++){
+        percent=round(float(letterCount[i])/float(possibleWords.size())*10000)/100;
+        letterPercentages.push_back(percent);
+    }
+}
+
+//sorting the percentages
+void sorting(vector <float> &percents){
+    sort(percents.begin(), percents.end(), greater <float>());
+}
+
+// instructionn
 void instructions(){
-    cout<<"Instructions.";
+    cout<<"\nWhen you are asked to enter your green letters and for example you know that the A is 3rd and the T is last you would enter --A-T (could be capitalized or not). ";
+    cout<<"\nThe dashes mean you don't know which letter goes in that spot so if you don't know the positions of any letters just enter five dashes. ";
+    cout<<"\nYou will be asked to enter your yellow letters and if there are none, enter 1. ";
+    cout<<"\nIf you know that there is an L and an E, you would enter LE.";
+    cout<<"\nFor the gray letters you will enter all of the letters you know are not in the word and if there are no gray letters enter 1.";
+    cout<<"\ne.x. QWYUIOH";
+    cout<<"\nIf you accidently enter a number or enter a yellow or green letter into the gray letters, it will just ignore it.";
+    cout<<"\nIt will then ask you if you want to see any 5 letter words that follows the criteria or just the word that could be the answer.";
+    cout<<"\nEnter 'p' for possible words, and enter 'a' for just the wordle answers. ";
+    cout<<"\nIt will then show you which letters appear in any of the words and what percentage of the possible words they are in.";
+    cout<<"\nThen it will show the possible words following the criteria.\n\n";
 }
 
 void runTest(){
@@ -243,7 +316,7 @@ void runTest(){
     vector <char> grays;
     vector <char> yellows={'B'};
     vector <char> possibleLetters;
-    set <string> totalOptions=getWordleWords();
+    set <string> totalOptions=getWordleWords("options.txt");
    // set <string> totalOptions={"BREAK"};
 
     vector <int> greenPlacements={3};
@@ -268,52 +341,94 @@ void runTest(){
     
 }
 
+
 //main
 int main(){
     //runTest();
     //variables
-    string letter, wantInstructions, alphabet="QWERTYUIOPASDFGHJKLZXCVBNM";
+    string letter, wantInstructions, playAgain="y", alphabet="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     int placement, counter;
     vector <char> greens, grays, yellows, possibleLetters;
     vector <string> possibleWords, yellowPlacements;
     vector <int> greenPlacements;
-    set <string> totalOptions=getWordleWords();
+    vector <float> letterPercentages;
+    set <string> totalOptions;
 
     //instructions
-    cout<<"If you need instructions click y, otherwise click n";
+    cout<<"\033[0;1mIf you need instructions enter y, otherwise enter n: ";
     cin>>wantInstructions;
-
     if (wantInstructions=="y"){
         instructions();
     }
 
-    //getting the letters
-    greenLetters(greens, greenPlacements, alphabet);
-    gettingLetters(yellows, "\033[0;93myellow\033[0;1m", alphabet);
-    gettingLetters(grays, "\033[0;98mgray\033[0;1m", alphabet);
+    while (playAgain=="y"){
+        //getting the letters
+        greenLetters(greens, greenPlacements, alphabet);
+        gettingLetters(yellows, "\033[0;93myellow\033[0;1m", alphabet, greens, {' ', ' '});
+        gettingLetters(grays, "\033[0;98mgray\033[0;1m", alphabet, greens, yellows);
         
-    //getting placements
-    placements(yellows, yellowPlacements);
-    
-    //going through all words
-    for (auto it:totalOptions){
+        //getting placements
+        placements(yellows, yellowPlacements);
+        
+        //seeing which words they want
+        wantsAllWords(totalOptions);
 
-    // for (int i=0; i<totalOptions.size(); i++){
-    //     auto it = totalOptions.begin();
-    //     // Advance the iterator to the random spot
-    //     advance(it, i); 
-        //going to elimintation i
-        eliminating(possibleWords, grays, greens, yellows, it, greenPlacements, yellowPlacements);
-    }
-    cout<<"\n\nSucess! The size of the list is "<<possibleWords.size()<<endl;
-    cout<<"\nThe words are :";
-    for (int i=0; i<possibleWords.size(); i++){
-        cout<<possibleWords[i]<<"\t";
-        counter+=1;
-        if (counter==10){
-            counter=0; 
-            cout<<"\n";
+        //going through all words
+        for (auto it:totalOptions){
+            eliminating(possibleWords, grays, greens, yellows, it, greenPlacements, yellowPlacements);
+        }
+
+        //outputting words
+        cout<<"\n\nThere are "<<possibleWords.size()<<" words. \n";
+        cout<<"\nThe words are:\n";
+        counter=0;
+        for (int i=0; i<possibleWords.size(); i++){
+            cout<<possibleWords[i]<<"\t";
+            counter+=1;
+            if (counter==10){
+                counter=0; 
+                cout<<"\n";
+            }
+        }
+
+        //dealing with what if it is 0
+        if (possibleWords.size()==0){
+            cout<<"Sorry, there doesn't seem to be any options. Please try again. \nIt is possible that you entered one of your green or yellow letters in with the gray letters.";
+        }
+        //making sure that there are words.
+        if (possibleWords.size()!=0){
+            //outputting percentages
+            letterPercents(possibleWords, alphabet, letterPercentages);
+            counter=0;
+            cout<<"\n\n";
+            //sorting(letterPercentages);
+            for (int i=0; i<26; i++){
+                if (letterPercentages[i]!=0){
+                    printf("%c: %3.2f% \t",alphabet[i], letterPercentages[i]);
+                    counter+=1;
+                }
+                if (counter==10){
+                    counter=0; 
+                    cout<<"\n";
+                }
+            }
+        }
+
+        //playing again
+        cout<<"\n\nWould you like to play again? (y/n): ";
+        cin>>playAgain;
+        
+        if (playAgain=="y"){
+            greens={};
+            grays={};
+            yellows={};
+            possibleWords={};
+            yellowPlacements={};
+            greenPlacements={};
+            letterPercentages={};
+            system("clear");
         }
     }
+
     return 0;
 }

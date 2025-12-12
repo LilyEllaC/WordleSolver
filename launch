@@ -1,0 +1,2 @@
+/usr/bin/g++ -fdiagnostics-color=always -g 'solver.cpp' -o 'solver'
+./solver
