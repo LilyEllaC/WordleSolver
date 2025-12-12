@@ -19,7 +19,7 @@ A way to help solve wordle when the word is being annoying.
 
 3. *Execute* Run the game with his command for Linux:
     ```bash
-    .\solver
+    ./solver
     ```
 
 ## How to use
