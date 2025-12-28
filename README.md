@@ -17,7 +17,7 @@ A way to help solve wordle when the word is being annoying.
 
 2. *Naviagte* Open the terminal and go to the directory you want to open it in
 
-3. *Execute* Run the game with his command for Linux:
+3. *Execute* Run the game with this command for Linux:
     ```bash
     ./solver
     ```
